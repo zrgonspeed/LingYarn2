@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<top.cnzrg.lingyarn.view.TitleBar xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:background="#0c4680"
+    android:paddingTop="0dp"
+    android:gravity="center_vertical"
+    android:fitsSystemWindows="true"
+    android:orientation="horizontal">
+
+    <ImageView
+        android:layout_width="50dp"
+        android:layout_weight="0.2"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:src="@drawable/launcher" />
+
+    <!--搜索框-->
+    <TextView
+        android:id="@+id/tv_search"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_weight="1"
+        android:background="@drawable/selector_tv_search_bg"
+        android:clickable="true"
+        android:drawableLeft="@drawable/selector_tv_search_drawable"
+        android:drawablePadding="5dp"
+        android:text="全网搜索"
+        android:textColor="@drawable/selector_tv_search_textcolor"
+        android:textSize="15dp" />
+
+    <!--游戏图标，右上角有个小红点-->
+    <RelativeLayout
+        android:id="@+id/rl_game"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp">
+
+        <TextView
+            android:id="@+id/tv_game"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableLeft="@drawable/ic_topbanner_game" />
+
+        <ImageView
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:layout_alignRight="@id/tv_game"
+            android:background="@drawable/shape_dot" />
+    </RelativeLayout>
+
+    <!--历史图标-->
+    <ImageView
+        android:id="@+id/iv_history"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:src="@drawable/ic_topbanner_record" />
+
+</top.cnzrg.lingyarn.view.TitleBar>
