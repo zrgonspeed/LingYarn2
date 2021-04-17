@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -115,6 +116,8 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
     private final static int DEF_SCREEN = 0;
     private final static int FULL_SCREEN = 1;
     private boolean isFullScreen = false;
+    private int maxVolume;
+    private int currentVolume;
 
     private void findViews() {
         media_controller = findViewById(R.id.media_controller);
@@ -137,6 +140,9 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         btSwitchFull = (Button) findViewById(R.id.bt_switch_full);
         videoview = (VideoView)findViewById(R.id.videoview);
 
+
+        seekbarVoice.setMax(maxVolume);
+        seekbarVoice.setProgress(currentVolume);
     }
 
     @Override
@@ -149,11 +155,11 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
 
         setContentView(R.layout.activity_system_video_player);
 
+        initData();
+
         findViews();
 
         initEvent();
-
-        initData();
 
         setData();
 
@@ -175,6 +181,9 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         }
 
         setButtonState();
+
+        // 默认显示控制面板
+        showMediaController();
     }
 
     private void initData() {
@@ -195,14 +204,16 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         // 手势识别器
         detector = new GestureDetector(this, new MyGestureDetector());
 
-        // 默认显示控制面板
-        showMediaController();
-
         // 获取屏幕宽高
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         screenWidth = metrics.widthPixels;
         screenHeight = metrics.heightPixels;
+
+        // 音量相关
+        am = (AudioManager) getSystemService(AUDIO_SERVICE);
+        maxVolume = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        currentVolume = am.getStreamVolume(AudioManager.STREAM_MUSIC);
     }
 
     class MyReceiver extends BroadcastReceiver {
@@ -254,6 +265,9 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         videoview.setOnCompletionListener(new MyOnCompletionListener());
 
         seekbarVideo.setOnSeekBarChangeListener(new VideoOnSeekBarChangeListener());
+
+        // 音量条
+        seekbarVoice.setOnSeekBarChangeListener(new VoiceOnSeekBarChangeListener());
     }
 
     class VideoOnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
@@ -368,7 +382,8 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         } else if (v == btSwitchPlayer) {
 
         } else if (v == btVoice) {
-
+            isMute = !isMute;
+            updateVoice(currentVolume, isMute);
         }
 
         mHandler.removeMessages(HIDE_MEDIACONTROLLER);
@@ -631,6 +646,45 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         showMediaController = false;
 
         mHandler.removeMessages(HIDE_MEDIACONTROLLER);
+    }
+
+
+    private AudioManager am;
+    private boolean isMute = false;
+    private class VoiceOnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
+
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            if (fromUser) {
+                if (progress > 0) {
+                    isMute = false;
+                } else {
+                    isMute = true;
+                }
+                updateVoice(progress, isMute);
+            }
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+            mHandler.removeMessages(HIDE_MEDIACONTROLLER);
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+            mHandler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, TIME_HIDE_MEDIACONTROLLER);
+        }
+    }
+
+    private void updateVoice(int progress, boolean isMute) {
+        if (isMute) {
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, 0,  0);
+            seekbarVoice.setProgress(0);
+        } else  {
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, progress,  0);
+            seekbarVoice.setProgress(progress);
+        }
+        currentVolume = progress;
     }
 
 }
