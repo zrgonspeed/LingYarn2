@@ -151,6 +151,8 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         } else {
             ToastUtils.toastLong(this, "同学你没有传数据");
         }
+
+        setButtonState();
     }
 
     private void initData() {
@@ -305,9 +307,9 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         if (v == btExit) {
 
         } else if (v == btNext) {
-
+            playNextVideo();
         } else if (v == btPre) {
-
+            playPreVideo();
         } else if (v == btStartPause) {
             if (videoview.isPlaying()) {
                 // 设置视频暂停
@@ -327,6 +329,98 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
 
         } else if (v == btVoice) {
 
+        }
+    }
+
+    private void playNextVideo() {
+        if (mediaItems != null && mediaItems.size() > 0) {
+            position++;
+            if (position < mediaItems.size()) {
+                MediaItem mediaItem = mediaItems.get(position);
+                tvName.setText(mediaItem.getName());
+                videoview.setVideoPath(mediaItem.getData());
+
+                btStartPause.setBackgroundResource(R.drawable.selector_btn_pause);
+
+                // 设置按钮状态
+                setButtonState();
+            }
+
+        } else if (uri != null) {
+            setButtonState();
+        }
+
+    }
+
+    private void playPreVideo() {
+        if (mediaItems != null && mediaItems.size() > 0) {
+            position--;
+            if (position >= 0) {
+                MediaItem mediaItem = mediaItems.get(position);
+                tvName.setText(mediaItem.getName());
+                videoview.setVideoPath(mediaItem.getData());
+
+                btStartPause.setBackgroundResource(R.drawable.selector_btn_pause);
+
+                // 设置按钮状态
+                setButtonState();
+            }
+
+        } else if (uri != null) {
+            setButtonState();
+        }
+    }
+
+    private void setButtonState() {
+        if (mediaItems != null && mediaItems.size() > 0) {
+            if (mediaItems.size() == 1) {
+                // 两个按钮都不能点击
+                btPre.setEnabled(false);
+                btPre.setBackgroundResource(R.drawable.btn_pre_gray);
+                btNext.setEnabled(false);
+                btNext.setBackgroundResource(R.drawable.btn_next_gray);
+            } else if (mediaItems.size() == 2) {
+                if (position == 0) {
+                    // pre 不能点击
+                    btPre.setEnabled(false);
+                    btPre.setBackgroundResource(R.drawable.btn_pre_gray);
+
+                    // next 可以点击
+                    btNext.setEnabled(true);
+                    btNext.setBackgroundResource(R.drawable.selector_btn_next);
+                }else {
+                    // pre 可以点击
+                    btPre.setEnabled(true);
+                    btPre.setBackgroundResource(R.drawable.selector_btn_pre);
+
+                    // next 不能点击
+                    btNext.setEnabled(false);
+                    btNext.setBackgroundResource(R.drawable.btn_next_gray);
+                }
+            } else {
+                if (position == mediaItems.size() - 1) {
+                    // next 不能点击
+                    btNext.setEnabled(false);
+                    btNext.setBackgroundResource(R.drawable.btn_next_gray);
+                } else if (position == 0) {
+                    // pre 不能点击
+                    btPre.setEnabled(false);
+                    btPre.setBackgroundResource(R.drawable.btn_pre_gray);
+                } else {
+                    // 两个都可以点击
+                    btPre.setEnabled(true);
+                    btPre.setBackgroundResource(R.drawable.selector_btn_pre);
+                    btNext.setEnabled(true);
+                    btNext.setBackgroundResource(R.drawable.selector_btn_next);
+                }
+
+            }
+        } else if (uri != null) {
+            // 两个按钮都不能点击
+            btPre.setEnabled(false);
+            btPre.setBackgroundResource(R.drawable.btn_pre_gray);
+            btNext.setEnabled(false);
+            btNext.setBackgroundResource(R.drawable.btn_next_gray);
         }
     }
 
@@ -373,7 +467,8 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
 
         @Override
         public void onCompletion(MediaPlayer mp) {
-            ToastUtils.toastLong(SystemVideoPlayer.this, "播放完成了 = " + uri);
+//            ToastUtils.toastLong(SystemVideoPlayer.this, "播放完成了");
+            playNextVideo();
         }
     }
 }
