@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
 import android.support.constraint.ConstraintLayout;
+import android.util.DisplayMetrics;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -21,7 +22,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.VideoView;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -31,6 +31,7 @@ import top.cnzrg.lingyarn.domain.MediaItem;
 import top.cnzrg.lingyarn.util.LogUtil;
 import top.cnzrg.lingyarn.util.TimeUtils;
 import top.cnzrg.lingyarn.util.ToastUtils;
+import top.cnzrg.lingyarn.view.VideoView;
 
 /**
  * FileName: SystemVideoPlayer
@@ -111,6 +112,9 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
     private final static int HIDE_MEDIACONTROLLER = 2;
     private final static int TIME_HIDE_MEDIACONTROLLER = 3000;
 
+    private final static int DEF_SCREEN = 0;
+    private final static int FULL_SCREEN = 1;
+    private boolean isFullScreen = false;
 
     private void findViews() {
         media_controller = findViewById(R.id.media_controller);
@@ -131,7 +135,7 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         btStartPause = (Button) findViewById(R.id.bt_start_pause);
         btNext = (Button) findViewById(R.id.bt_next);
         btSwitchFull = (Button) findViewById(R.id.bt_switch_full);
-        videoview = findViewById(R.id.videoview);
+        videoview = (VideoView)findViewById(R.id.videoview);
 
     }
 
@@ -194,6 +198,11 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         // 默认显示控制面板
         showMediaController();
 
+        // 获取屏幕宽高
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        screenWidth = metrics.widthPixels;
+        screenHeight = metrics.heightPixels;
     }
 
     class MyReceiver extends BroadcastReceiver {
@@ -349,6 +358,12 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
             }
 
         } else if (v == btSwitchFull) {
+            if (isFullScreen) {
+                setScreenType(DEF_SCREEN);
+            } else {
+                setScreenType(FULL_SCREEN);
+            }
+
 
         } else if (v == btSwitchPlayer) {
 
@@ -358,6 +373,42 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
 
         mHandler.removeMessages(HIDE_MEDIACONTROLLER);
         mHandler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, TIME_HIDE_MEDIACONTROLLER);
+    }
+
+    // 屏幕宽高
+    private int screenWidth;
+    private int screenHeight;
+
+    // 视频原生宽高
+    private int videoWidth;
+    private int videoHeight;
+
+
+    private void setScreenType(int type) {
+        switch (type) {
+            case FULL_SCREEN:
+                // 1. 设置视频画面大小
+                // 2. 设置按钮状态
+                videoview.setVideoSize(screenWidth, screenHeight);
+                btSwitchFull.setBackgroundResource(R.drawable.selector_btn_switch_full_default);
+                isFullScreen = true;
+                break;
+            case DEF_SCREEN:
+                int width = 0;
+                int height = 0;
+
+                if ( videoWidth * screenHeight  < screenWidth * videoHeight ) {
+                    width = screenHeight * videoWidth / videoHeight;
+                } else if ( videoWidth * screenHeight  > screenWidth * videoHeight ) {
+                    height = screenWidth * videoHeight / videoWidth;
+                }
+
+                videoview.setVideoSize(width, height);
+
+                btSwitchFull.setBackgroundResource(R.drawable.selector_btn_switch_full);
+                isFullScreen = false;
+                break;
+        }
     }
 
     private void playNextVideo() {
@@ -473,6 +524,14 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
 
             // 发消息
             mHandler.sendEmptyMessage(PROGRESS);
+
+            videoWidth = mp.getVideoWidth();
+            videoHeight = mp.getVideoHeight();
+
+            LogUtil.i("视频宽度：" + videoWidth + "  视频高度：" + videoWidth);
+//            videoview.setVideoSize(mp.getVideoWidth(), mp.getVideoHeight());
+            setScreenType(DEF_SCREEN);
+
         }
     }
 
