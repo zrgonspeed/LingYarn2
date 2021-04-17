@@ -11,6 +11,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.constraint.ConstraintLayout;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -38,6 +41,8 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
     private static final String TAG = SystemVideoPlayer.class.getSimpleName();
     private VideoView videoview;
     private Uri uri;
+
+    private ConstraintLayout media_controller;
 
     private LinearLayout llPlayerStatus;
     private TextView tvName;
@@ -73,6 +78,10 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
+                case HIDE_MEDIACONTROLLER:
+                    hideMediaController();
+                    break;
+
                 case PROGRESS:
 
                     // 得到当前的视频播放进度
@@ -96,7 +105,16 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         }
     };
 
+    private GestureDetector detector;
+    private boolean showMediaController = true;
+
+    private final static int HIDE_MEDIACONTROLLER = 2;
+    private final static int TIME_HIDE_MEDIACONTROLLER = 3000;
+
+
     private void findViews() {
+        media_controller = findViewById(R.id.media_controller);
+
         llPlayerStatus = findViewById(R.id.ll_player_status);
         tvName = (TextView) findViewById(R.id.tv_name);
         ivBattery = (ImageView) findViewById(R.id.iv_battery);
@@ -169,6 +187,13 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         uri = getIntent().getData();
         mediaItems = (ArrayList<MediaItem>) getIntent().getSerializableExtra("videolist");
         position = getIntent().getIntExtra("position", 0);
+
+        // 手势识别器
+        detector = new GestureDetector(this, new MyGestureDetector());
+
+        // 默认显示控制面板
+        showMediaController();
+
     }
 
     class MyReceiver extends BroadcastReceiver {
@@ -330,6 +355,9 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         } else if (v == btVoice) {
 
         }
+
+        mHandler.removeMessages(HIDE_MEDIACONTROLLER);
+        mHandler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, TIME_HIDE_MEDIACONTROLLER);
     }
 
     private void playNextVideo() {
@@ -388,7 +416,7 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
                     // next 可以点击
                     btNext.setEnabled(true);
                     btNext.setBackgroundResource(R.drawable.selector_btn_next);
-                }else {
+                } else {
                     // pre 可以点击
                     btPre.setEnabled(true);
                     btPre.setBackgroundResource(R.drawable.selector_btn_pre);
@@ -471,4 +499,79 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
             playNextVideo();
         }
     }
+
+    private class MyGestureDetector extends GestureDetector.SimpleOnGestureListener {
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+            ToastUtils.toast(getApplicationContext(), "长按了");
+        }
+
+        @Override
+        public boolean onDoubleTap(MotionEvent e) {
+            ToastUtils.toast(getApplicationContext(), "双击了");
+            return super.onDoubleTap(e);
+        }
+
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent e) {
+            ToastUtils.toast(getApplicationContext(), "单击了");
+
+            if (showMediaController) {
+                hideMediaController();
+            } else {
+                showMediaController();
+            }
+
+            return super.onSingleTapConfirmed(e);
+        }
+
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return false;
+        }
+
+        @Override
+        public void onShowPress(MotionEvent e) {
+
+        }
+
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            return false;
+        }
+
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            return false;
+        }
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        detector.onTouchEvent(event);
+        return super.onTouchEvent(event);
+    }
+
+    // 点击隐藏与显示
+    private void showMediaController() {
+        media_controller.setVisibility(View.VISIBLE);
+        showMediaController = true;
+
+        mHandler.removeMessages(HIDE_MEDIACONTROLLER);
+        mHandler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, TIME_HIDE_MEDIACONTROLLER);
+    }
+
+    private void hideMediaController() {
+        media_controller.setVisibility(View.GONE);
+        showMediaController = false;
+
+        mHandler.removeMessages(HIDE_MEDIACONTROLLER);
+    }
+
 }

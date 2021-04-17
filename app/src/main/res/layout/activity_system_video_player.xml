@@ -14,5 +14,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <include layout="@layout/media_controller"/>
+    <include
+        android:id="@+id/media_controller"
+        layout="@layout/media_controller"/>
 </android.support.constraint.ConstraintLayout>
