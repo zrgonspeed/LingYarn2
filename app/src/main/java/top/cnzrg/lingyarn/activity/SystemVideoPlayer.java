@@ -15,6 +15,7 @@ import android.os.Parcelable;
 import android.support.constraint.ConstraintLayout;
 import android.util.DisplayMetrics;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -626,10 +627,80 @@ public class SystemVideoPlayer extends Activity implements View.OnClickListener 
         }
     }
 
+
+    private float startY;
+    /**
+     * 屏幕的高
+     */
+    private float touchRang;
+
+    /**
+     * 当一按下的音量
+     */
+    private int mVol;
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         detector.onTouchEvent(event);
+
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:   // 手指按下
+                // 1.按下记录值
+                startY = event.getY();
+
+                mVol = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+                LogUtil.d("screenHeight == " + screenHeight + "  screenWidth == " + screenWidth);
+                // 竖屏的时候 w == 720   横屏时候 h = 720
+                touchRang = Math.min(screenHeight, screenWidth);
+                mHandler.removeMessages(HIDE_MEDIACONTROLLER);
+
+                break;
+
+            case MotionEvent.ACTION_UP:     // 手指离开
+                mHandler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, 4000);
+                break;
+
+            case MotionEvent.ACTION_MOVE:   // 手指移动
+                // 2.移动的记录相关值
+                float endY = event.getY();
+                float distanceY = startY - endY;
+
+                // 改变声音 = (滑动屏幕的距离:总距离) * 音量最大值
+                float delta = (distanceY / touchRang) * maxVolume;
+
+                // 最终声音 = 原来的 + 改变声音
+                int voice = (int) Math.min(Math.max(mVol + delta, 0), maxVolume);
+                if (delta != 0) {
+                    isMute = false;
+                    updateVoice(voice, false);
+
+                }
+                break;
+        }
+
+
+
         return super.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            currentVolume--;
+            updateVoice(currentVolume, false);
+            mHandler.removeMessages(HIDE_MEDIACONTROLLER);
+            mHandler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, 4000);
+            return true;
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            currentVolume++;
+            updateVoice(currentVolume, false);
+            mHandler.removeMessages(HIDE_MEDIACONTROLLER);
+            mHandler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, 4000);
+            return true;
+        }
+
+        return super.onKeyDown(keyCode, event);
+
     }
 
     // 点击隐藏与显示
